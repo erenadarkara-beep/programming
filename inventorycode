@@ -1,0 +1,28 @@
+# Spare Parts Inventory Assistant
+
+def main():
+    inventory = ["hydraulic pump", "PLC module", "servo motor"]
+
+    print("Hej Hej Eren. velkommen til spare parts inventory!")
+    
+    while True:
+        part = input("hvilken part har du brug for? ")
+
+        # Check if part is in inventory (case sensitive!)
+        if part in inventory:
+            print(f"I have got {part} here for you 😊. Bye!")
+            break
+
+        # Special stock queries
+        elif part.lower() in ["do you actually have any parts?",
+                              "is there anything in stock at all?"]:
+            print(f"We have {len(inventory)} part(s)!")
+            for item in inventory:
+                print(item)
+
+        # If not found
+        else:
+            print(f"I am afraid we don’t have any {part} in the inventory 😔")
+
+if __name__ == "__main__":
+    main()
