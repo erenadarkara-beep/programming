@@ -1,0 +1,61 @@
+#include "knights_tour.h"
+
+int nx = (int)x + MOVES_X[move_id];
+int ny = (int)y + MOVES_Y[move_id];
+
+if (nx < 0 || ny < 0) return false;
+if (nx >= SIZE || ny >= SIZE) return false;
+
+if (visited[ny][nx] != 0) return false; /* visited uses [row][col] */
+
+return true;
+}
+
+/* Attempt a greedy tour starting from (start_x, start_y).
+* The knight always takes the first accessible move in MOVES_* order.
+*/
+unsigned int tour_greedy(size_t start_x, size_t start_y)
+{
+board_t visited;
+memset(visited, 0, sizeof(visited));
+
+size_t x = start_x;
+size_t y = start_y;
+
+unsigned int step = 1;
+visited[y][x] = (int)step; /* mark starting square */
+
+while (1) {
+bool moved = false;
+for (size_t m = 0; m < MOVE_COUNT; ++m) {
+if (move_is_possible(m, x, y, visited)) {
+x = (size_t)((int)x + MOVES_X[m]);
+y = (size_t)((int)y + MOVES_Y[m]);
+++step;
+visited[y][x] = (int)step;
+moved = true;
+break; /* greedy: first available move */
+}
+}
+if (!moved) break;
+/* loop continues until no moves are possible */
+}
+
+return step;
+}
+
+/* Iterate over all starting squares and print number of visited squares in a grid.
+* Prints rows from top (0) to bottom (SIZE-1) so the output resembles a board.
+*/
+void greedy_tour_from_each_square(void)
+{
+for (size_t y = 0; y < SIZE; ++y) {
+for (size_t x = 0; x < SIZE; ++x) {
+unsigned int visited_count = tour_greedy(x, y);
+/* Print with width 3 to align columns; small formatting quirk intended */
+if (x > 0) putchar(' ');
+printf("%2u", visited_count);
+}
+putchar('\n');
+}
+}
