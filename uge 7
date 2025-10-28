@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <ctype.h>
+
+// ------------------------------------------------------------
+// Funktioner til bubble sort
+// ------------------------------------------------------------
+
+// Bytter to elementer i et array
+void swap(char *a, char *b) {
+    char temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Sammenligner to bogstaver uden at tage højde for store/små bogstaver
+bool letters_in_order(char a, char b) {
+    a = tolower((unsigned char)a);
+    b = tolower((unsigned char)b);
+    return a <= b;
+}
+
+// Sammenligner to tal (stigende rækkefølge)
+bool numbers_in_ascending_order(char a, char b) {
+    return a <= b;
+}
+
+// Selve bubble sort algoritmen
+void bubble_sort(char arr[], int n, bool (*pair_is_in_order)(char a, char b)) {
+    bool swapping_occurred;
+    do {
+        swapping_occurred = false;
+        for (int i = 1; i < n; i++) {
+            if (!pair_is_in_order(arr[i - 1], arr[i])) {
+                swap(&arr[i - 1], &arr[i]);
+                swapping_occurred = true;
+            }
+        }
+    } while (swapping_occurred);
+}
+
+// ------------------------------------------------------------
+// Test af funktionerne
+// ------------------------------------------------------------
+
+int main() {
+    // Test med bogstaver
+    char letter_arr1[] = {'z', 'S', 's', 'a'};
+    int n1 = sizeof(letter_arr1) / sizeof(letter_arr1[0]);
+
+    bubble_sort(letter_arr1, n1, letters_in_order);
+
+    printf("Sorterede bogstaver: ");
+    for (int i = 0; i < n1; i++) {
+        printf("%c ", letter_arr1[i]);
+    }
+    printf("\n");
+
+    // Test med tal
+    char number_arr1[] = {4, -1, 2, 9};
+    int n2 = sizeof(number_arr1) / sizeof(number_arr1[0]);
+
+    bubble_sort(number_arr1, n2, numbers_in_ascending_order);
+
+    printf("Sorterede tal: ");
+    for (int i = 0; i < n2; i++) {
+        printf("%d ", number_arr1[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
