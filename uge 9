@@ -1,0 +1,95 @@
+#include "raylib.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+#define WIDTH 400
+#define HEIGHT 400
+#define TITLE "Balls and their admirers"
+#define BALL_COUNT 100
+#define FPS 60
+#define VEL_MAX 5
+#define RADIUS_MAX 20
+#define RADIUS_MIN 5
+
+Color COLORS[] = {
+    LIGHTGRAY, GRAY,   DARKGRAY, YELLOW,     GOLD,      ORANGE,  PINK,
+    RED,       MAROON, GREEN,    LIME,       DARKGREEN, SKYBLUE, BLUE,
+    DARKBLUE,  PURPLE, VIOLET,   DARKPURPLE, BEIGE,     BROWN,   DARKBROWN,
+};
+
+typedef struct Ball {
+    float posx, posy;
+    float velx, vely;
+    float radius;
+    Color color;
+    struct Ball *follows;
+} Ball;
+
+Ball balls[BALL_COUNT];
+
+Ball *init_ball_random(Ball *p) {
+    p->posx = GetRandomValue(0, WIDTH);
+    p->posy = GetRandomValue(0, HEIGHT);
+    p->velx = GetRandomValue(-VEL_MAX, VEL_MAX);
+    p->vely = GetRandomValue(-VEL_MAX, VEL_MAX);
+    p->radius = GetRandomValue(RADIUS_MIN, RADIUS_MAX);
+    p->color = COLORS[GetRandomValue(0, sizeof(COLORS)/sizeof(COLORS[0]) - 1)];
+    p->follows = NULL;
+    return p;
+}
+
+void init_balls_random() {
+    for (int i = 0; i < BALL_COUNT; i++) {
+        init_ball_random(&balls[i]);
+    }
+    for (int i = 0; i < BALL_COUNT; i++) {
+        int leader_index;
+        do {
+            leader_index = GetRandomValue(0, BALL_COUNT - 1);
+        } while (leader_index == i);
+        balls[i].follows = &balls[leader_index];
+    }
+}
+
+Ball *draw_ball(Ball *p) {
+    DrawCircle(p->posx, p->posy, p->radius, p->color);
+    return p;
+}
+
+Ball *update_pos(Ball *p) {
+    p->posx = fmodf(WIDTH + p->posx + p->velx, WIDTH);
+    p->posy = fmodf(HEIGHT + p->posy + p->vely, HEIGHT);
+    return p;
+}
+
+Ball *update_vel_for_following(Ball *p) {
+    int errx = p->follows->posx - p->posx;
+    int erry = p->follows->posy - p->posy;
+    p->velx = (errx > 0) ? 1 : -1;
+    p->vely = (erry > 0) ? 1 : -1;
+    return p;
+}
+
+void update_elements() {
+    ClearBackground(RAYWHITE);
+    for (size_t i = 0; i < BALL_COUNT; ++i) {
+        update_vel_for_following(&balls[i]);
+        update_pos(&balls[i]);
+        draw_ball(&balls[i]);
+    }
+}
+
+int main() {
+    InitWindow(WIDTH, HEIGHT, TITLE);
+    SetTargetFPS(FPS);
+    init_balls_random();
+
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        update_elements();
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
