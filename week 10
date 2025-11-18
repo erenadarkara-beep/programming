@@ -1,0 +1,126 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define LINE_MAX 100
+#define DELIM "," // CSV delimiter
+
+char *ifile, *ofile;
+unsigned filter_age_max;
+FILE *istream, *ostream;
+
+const char USAGE[] =
+    R"(Filters CSV rows, keeping only those with provided maximum age
+%1$s max-age [input-file] [output-file]
+
+Example: 
+%1$s max-age 17 input.csv output.csv
+%1$s max-age 10 input.csv (outputs to stdout)
+%1$s max-age 54           (inputs from stdin, outputs to stdout)
+)";
+
+void filter_stream(FILE *istream, FILE *ostream) {
+  char line[LINE_MAX];
+  char *fgets_return;
+  char *name, *age_str;
+  size_t line_no = 0;
+
+  while ((fgets_return = fgets(line, LINE_MAX, istream)) != NULL) {
+    ++line_no;
+
+    // Remove trailing newline if present
+    size_t len = strlen(line);
+    if (len > 0 && line[len-1] == '\n') {
+      line[len-1] = '\0';
+      len--;
+    }
+
+    if (len == 0) {
+      // Blank line
+      fprintf(stderr, "Warning: Line %zu is blank\n", line_no);
+      continue;
+    }
+
+    // Split line into tokens
+    name = strtok(line, DELIM);
+    age_str = strtok(NULL, DELIM);
+    
+    // Check if we have exactly two columns
+    if (name == NULL || age_str == NULL) {
+      fprintf(stderr, "Error: Line %zu has wrong number of columns\n", line_no);
+      continue;
+    }
+
+    // Remove leading/trailing whitespace from age string
+    char *age_clean = age_str;
+    while (*age_clean == ' ' || *age_clean == '\t') age_clean++;
+    
+    // Age processing
+    unsigned age;
+    int recognized_count = sscanf(age_clean, "%d", &age);
+    if (recognized_count == 1) {
+      if (age <= filter_age_max) {
+        // Forward input line to ostream
+        fprintf(ostream, "%s,%s\n", name, age_clean);
+      }
+    } else {
+      fprintf(stderr, "Error: Line %zu has invalid age format\n", line_no);
+    }
+  }
+}
+
+int main(int argc, char *argv[]) {
+  ifile = NULL;
+  ofile = NULL;
+  
+  switch (argc) {
+  case 4:
+    // max-age ifile ofile
+    ofile = argv[3];
+    // Fall through
+  case 3:
+    // max-age ifile
+    ifile = argv[2];
+    // Fall through
+  case 2:
+    // max-age
+    if (!sscanf(argv[1], "%d", &filter_age_max)) {
+      puts("First argument is not an age.");
+      exit(EXIT_FAILURE);
+    }
+    break;
+  default:
+    printf(USAGE, argv[0]);
+    return EXIT_SUCCESS;
+  }
+
+  // Open input stream
+  if (ifile) {
+    istream = fopen(ifile, "r");
+    if (istream == NULL) {
+      fprintf(stderr, "Error: Cannot open input file '%s'\n", ifile);
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    istream = stdin;
+  }
+
+  // Open output stream
+  if (ofile) {
+    ostream = fopen(ofile, "w");
+    if (ostream == NULL) {
+      fprintf(stderr, "Error: Cannot open output file '%s'\n", ofile);
+      if (ifile) fclose(istream);
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    ostream = stdout;
+  }
+
+  filter_stream(istream, ostream);
+
+  // Cleanup
+  if (ifile) fclose(istream);
+  if (ofile) fclose(ostream);
+
+  return EXIT_SUCCESS;
+}
